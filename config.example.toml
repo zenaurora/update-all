@@ -1,13 +1,13 @@
-disable = ["mas"]
+disable = ["tlmgr"]
 
 [[custom]]
-name = "cargo-nextest"
-detect = "command -v cargo-nextest >/dev/null 2>&1"
-command = "cargo install cargo-nextest --locked"
+name = "some-npm-cli"
+detect = "command -v some-npm-cli >/dev/null 2>&1"
+command = "npm install -g some-npm-cli@latest"
 needs_sudo = false
 
 [[custom]]
-name = "uipro"
-detect = "command -v uipro >/dev/null 2>&1"
-command = "uipro update"
+name = "some-cargo-cli"
+detect = "command -v some-cargo-cli >/dev/null 2>&1"
+command = "cargo install some-cargo-cli --locked"
 needs_sudo = false

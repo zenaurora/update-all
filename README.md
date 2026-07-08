@@ -1,6 +1,26 @@
 # update-all
 
-Small native CLI for running the update commands you care about from one place.
+Small native CLI for running the updater commands you care about from one place.
+
+## Why this exists
+
+This tool is aimed at concrete CLIs, not generic package-manager maintenance.
+
+Good fits:
+
+- `codex update`
+- `claude update`
+- `kimi upgrade`
+- `uipro update`
+- `cargo install mdbook --locked`
+
+Less useful as built-ins:
+
+- generic `npm update`
+- generic `cargo update`
+- project-local dependency updates
+
+If a package manager installed a global CLI, the thing you usually want to update is that CLI itself.
 
 ## What it does
 
@@ -10,10 +30,9 @@ Small native CLI for running the update commands you care about from one place.
 - Continues after failures and prints a final summary
 - Supports optional custom updaters from TOML
 
-Built-in updaters:
+## Built-in updaters
 
 - `brew`
-- `oh-my-zsh`
 - `rustup`
 - `claude`
 - `codex`
@@ -21,20 +40,27 @@ Built-in updaters:
 - `kimi`
 - `opencode`
 - `bob`
-- `mas`
 - `bun`
+- `pnpm`
 - `uv`
-- `mise`
-- `asdf`
+- `cargo-edit`
+- `cargo-nextest`
+- `cargo-semver-checks`
+- `mdbook`
+- `mdbook-toc`
+- `tlmgr`
 
 Notes:
 
 - `bob` runs `bob update --all`, which updates Bob-managed Neovim installs.
 - That is separate from a Homebrew-installed `nvim`.
-- This tool is aimed at concrete CLIs, not just package managers themselves.
-  For example, `codex update` is a better built-in than a generic `npm update`.
+- `uipro` is provided by the global npm package `uipro-cli`; it updates the UI/UX Pro Max skill installer.
+- `uv` runs both `uv self update` and `uv tool upgrade --all`.
+- The Cargo-based entries reinstall globally installed Rust CLIs with `cargo install ... --locked`.
 
-## Usage
+## Install
+
+Development use:
 
 ```bash
 cargo run -- --list
@@ -42,15 +68,40 @@ cargo run
 cargo run -- --yes
 ```
 
-Build a release binary:
+Why the extra `--`:
+
+- `cargo run` starts the project through Cargo
+- the first `--` separates Cargo's own arguments from your program's arguments
+- `cargo run -- --list` means "run `update-all` and pass `--list` to it"
+
+Normal use:
 
 ```bash
 cargo build --release
+install -m 755 target/release/update-all ~/.local/bin/update-all
 ```
 
-Then place `target/release/update-all` somewhere in your `PATH`, such as `~/.local/bin/update-all`.
+Then make sure `~/.local/bin` is in your `PATH`, and run:
 
-## Optional config
+```bash
+update-all --list
+update-all
+update-all --yes
+```
+
+## Command reference
+
+```text
+update-all [OPTIONS]
+
+--yes            Skip the confirmation prompt and run immediately
+--list           List detected updaters and planned commands without running them
+--config <PATH>  Load custom updaters and disabled built-ins from this TOML file
+--help           Print help
+--version        Print version
+```
+
+## Config
 
 No config file is required. If present, the default path is:
 
@@ -66,46 +117,76 @@ update-all --config /path/to/config.toml
 
 Supported keys:
 
-- `disable = ["mas"]` to disable built-in updaters by name
-- `[[custom]]` to add your own updater entries
+- `disable = ["tlmgr"]` disables built-in updaters by name
+- `[[custom]]` adds your own updater entries
 
-Example:
+Config schema:
 
 ```toml
-disable = ["mas"]
+disable = ["tlmgr"]
 
 [[custom]]
-name = "cargo-nextest"
-detect = "command -v cargo-nextest >/dev/null 2>&1"
-command = "cargo install cargo-nextest --locked"
+name = "some-tool"
+detect = "command -v some-tool >/dev/null 2>&1"
+command = "some-tool update"
 needs_sudo = false
 ```
 
-More tool-level examples:
+Field meanings:
+
+- `name` is the display name and unique identifier
+- `detect` is a shell command used to decide whether the tool is installed
+- `command` is the updater command that will actually run
+- `needs_sudo = true` runs the command through `sudo sh -lc`
+
+## Examples
+
+Tool-level examples:
 
 ```toml
+disable = ["tlmgr"]
+
 [[custom]]
-name = "uipro"
-detect = "command -v uipro >/dev/null 2>&1"
-command = "uipro update"
+name = "some-npm-cli"
+detect = "command -v some-npm-cli >/dev/null 2>&1"
+command = "npm install -g some-npm-cli@latest"
 needs_sudo = false
 
 [[custom]]
-name = "codex-npm"
-detect = "command -v codex >/dev/null 2>&1"
-command = "npm install -g @openai/codex@latest"
+name = "some-cargo-cli"
+detect = "command -v some-cargo-cli >/dev/null 2>&1"
+command = "cargo install some-cargo-cli --locked"
 needs_sudo = false
 
 [[custom]]
-name = "mdbook"
-detect = "command -v mdbook >/dev/null 2>&1"
-command = "cargo install mdbook --locked"
-needs_sudo = false
-
-[[custom]]
-name = "kimi-uv"
-detect = "command -v kimi >/dev/null 2>&1"
-command = "uv tool upgrade kimi-cli"
+name = "some-uv-tool"
+detect = "command -v some-uv-tool >/dev/null 2>&1"
+command = "uv tool upgrade some-uv-tool"
 needs_sudo = false
 ```
-# update-all
+
+Examples of things you may want to add yourself if they exist on your machine:
+
+- CLIs installed with `cargo install`
+- CLIs installed with `npm -g`
+- CLIs installed with `uv tool install`
+- internal company tools with a custom upgrade command
+
+## Output behavior
+
+`update-all --list` only prints detection results and planned commands.
+
+`update-all`:
+
+- shows detected updaters
+- shows planned commands
+- asks once for confirmation
+- runs each updater in order
+- continues even if one updater fails
+- prints a final summary of `ok`, `failed`, and `skipped`
+
+## Caveats
+
+- Detection and execution are shell-based, using `sh -lc`.
+- Built-ins are intentionally conservative. Not every global CLI should be hardcoded.
+- Some tools are better represented as custom config entries because they are machine-specific.

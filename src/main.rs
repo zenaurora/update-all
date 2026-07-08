@@ -213,13 +213,6 @@ fn builtin_updaters() -> Vec<Updater> {
             UpdaterKind::Builtin,
         ),
         updater(
-            "oh-my-zsh",
-            "[ -d \"$HOME/.oh-my-zsh\" ] && command -v omz >/dev/null 2>&1",
-            "omz update",
-            false,
-            UpdaterKind::Builtin,
-        ),
-        updater(
             "rustup",
             "command -v rustup >/dev/null 2>&1",
             "rustup update",
@@ -269,13 +262,6 @@ fn builtin_updaters() -> Vec<Updater> {
             UpdaterKind::Builtin,
         ),
         updater(
-            "mas",
-            "command -v mas >/dev/null 2>&1",
-            "mas upgrade",
-            false,
-            UpdaterKind::Builtin,
-        ),
-        updater(
             "bun",
             "command -v bun >/dev/null 2>&1",
             "bun upgrade",
@@ -297,23 +283,37 @@ fn builtin_updaters() -> Vec<Updater> {
             UpdaterKind::Builtin,
         ),
         updater(
-            "gh-extensions",
-            "command -v gh >/dev/null 2>&1",
-            "gh extension upgrade --all",
+            "cargo-edit",
+            "command -v cargo-upgrade >/dev/null 2>&1",
+            "cargo install cargo-edit --locked",
             false,
             UpdaterKind::Builtin,
         ),
         updater(
-            "mise",
-            "command -v mise >/dev/null 2>&1",
-            "mise self-update && mise plugins update",
+            "cargo-nextest",
+            "command -v cargo-nextest >/dev/null 2>&1",
+            "cargo install cargo-nextest --locked",
             false,
             UpdaterKind::Builtin,
         ),
         updater(
-            "asdf",
-            "command -v asdf >/dev/null 2>&1",
-            "asdf plugin update --all",
+            "cargo-semver-checks",
+            "command -v cargo-semver-checks >/dev/null 2>&1",
+            "cargo install cargo-semver-checks --locked",
+            false,
+            UpdaterKind::Builtin,
+        ),
+        updater(
+            "mdbook",
+            "command -v mdbook >/dev/null 2>&1",
+            "cargo install mdbook --locked",
+            false,
+            UpdaterKind::Builtin,
+        ),
+        updater(
+            "mdbook-toc",
+            "command -v mdbook-toc >/dev/null 2>&1",
+            "cargo install mdbook-toc --locked",
             false,
             UpdaterKind::Builtin,
         ),
@@ -539,13 +539,14 @@ mod tests {
     }
 
     #[test]
-    fn builtin_updaters_include_recent_package_managers() {
+    fn builtin_updaters_include_installed_global_tools() {
         let updaters = builtin_updaters();
 
         assert!(updaters.iter().any(|item| item.name == "pnpm"));
-        assert!(updaters.iter().any(|item| item.name == "gh-extensions"));
         assert!(updaters.iter().any(|item| item.name == "tlmgr"));
         assert!(updaters.iter().any(|item| item.name == "uipro"));
+        assert!(updaters.iter().any(|item| item.name == "cargo-nextest"));
+        assert!(updaters.iter().any(|item| item.name == "mdbook"));
     }
 
     #[test]
