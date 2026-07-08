@@ -1,0 +1,13 @@
+disable = ["mas"]
+
+[[custom]]
+name = "cargo-nextest"
+detect = "command -v cargo-nextest >/dev/null 2>&1"
+command = "cargo install cargo-nextest --locked"
+needs_sudo = false
+
+[[custom]]
+name = "uipro"
+detect = "command -v uipro >/dev/null 2>&1"
+command = "uipro update"
+needs_sudo = false
